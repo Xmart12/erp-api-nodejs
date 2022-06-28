@@ -13,7 +13,7 @@ service.list = (params, callback) => {
         where: [
             `CountryId = ${params.countryId}`
         ]
-    }, (err, data) => callback(wrapper(err, data, false, false)));
+    }, (err, data) => callback(wrapper.auto(err, data, false, false)));
 };
 
 service.find = (params, callback) => {
@@ -24,7 +24,7 @@ service.find = (params, callback) => {
             `CountryId = ${params.countryId}`,
             `Id = ${params.id}`
         ]
-    }, (err, data) => callback(wrapper(err, data, true, true)));
+    }, (err, data) => callback(wrapper.auto(err, data, true, true)));
 };
 
 //export module

@@ -12,14 +12,16 @@ const getError = (error) => {
     if (error.code == 'ECONNREFUSED' || error.code == 'ER_ACCESS_DENIED_ERROR') {
         errorMsg = "Cannot establish database connection";
     } else {
-        errorMsg = 'Fail getting database data'
+        errorMsg = error.code + ' Fail getting database data'
     }
+    
+    console.log(error);
 
     return errorMsg;
 };
 
 //Execute query method
-const executeQuery = (sql, callback) => {
+const executeQuery = (sql, callback, write = false) => {
 
     //Execute query
     return conn.query(sql, (err, res) => {
@@ -29,7 +31,11 @@ const executeQuery = (sql, callback) => {
         }
         else {
             //Send result
-            callback(null, camelcase(res));
+            if (write) {
+                callback(null, (res.affectedRows > 0));
+            } else {
+                callback(null, camelcase(res));
+            }
         }
     })
 };
@@ -73,8 +79,53 @@ connection.getData = (queryData, callback) => {
     sqlQuery += (queryData.limit) ? ` limit ${queryData.limit} ` : '';
 
     //execute query
-    executeQuery(sqlQuery, callback);;
+    executeQuery(sqlQuery, callback, false);;
 };
+
+
+connection.insert = (queryData, callback) => {
+
+    //set fields and values
+    var fields = camelcase(Object.keys(queryData.data));
+    var values = [];
+    fields.forEach(f => {
+        if (typeof queryData.data[f] === 'boolean') {
+            values.push(queryData.data[f] ? 1 : 0);
+        } else {
+            values.push(`'${queryData.data[f]}'`);
+        }
+    });
+    
+    //set SQL query
+    var sqlQuery = 'insert into ' + queryData.table + ' ';
+    //Fields
+    sqlQuery += ` ( ${fields.join(', ')} ) `;
+    //Values
+    sqlQuery += ` values ( ${values.join(', ')} ) `;
+
+    //execute query
+    executeQuery(sqlQuery, callback, true);
+}
+
+
+connection.execute = (queryData, callback) => {
+    
+    var values = [];
+    queryData.params.forEach(p => {
+        if (typeof p === 'boolean') {
+            values.push(p ? 1 : 0);
+        } else {
+            values.push(`'${p}'`);
+        }
+    });
+
+    //set SQL query
+    var sqlQuery = 'call ' + queryData.procedure + ' ';
+    sqlQuery += ` ( ${values.join(', ')} ) `;
+
+    //execute query
+    executeQuery(sqlQuery, callback, queryData.noData);
+}
 
 //Export Module
 module.exports = connection;

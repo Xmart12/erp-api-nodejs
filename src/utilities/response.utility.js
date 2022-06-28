@@ -1,4 +1,4 @@
-//export fucntion
+//export function
 /**
  * Send Response to client
  * @param {object} res Response module object
