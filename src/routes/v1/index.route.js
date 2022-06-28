@@ -8,5 +8,6 @@ module.exports = (app) => {
     app.use(prefix, require('./states.route'));
     app.use(prefix, require('./cities.route'));
     app.use(prefix.concat('/users'), require('./users.route'));
+    app.use(prefix.concat('/auth'), require('./auth.route'));
 
 };
