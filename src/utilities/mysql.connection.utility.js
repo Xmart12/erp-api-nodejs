@@ -2,10 +2,18 @@
 const mysql = require('mysql');
 const camelcase = require('camelcase-keys');
 
-//Create Connection
+//Connection variables
 let conn = null;
+let dbconfig = null;
+let data = null;
 
-//Send error by Error Code
+
+
+/**
+ * Send error by Error Code
+ * @param {Object} error Error object
+ * @returns Error Message
+ */
 const getError = (error) => {
     var errorMsg = null;
 
@@ -14,17 +22,31 @@ const getError = (error) => {
     } else {
         errorMsg = error.code + ' Fail getting database data'
     }
-    
-    console.log(error);
 
     return errorMsg;
 };
 
-//Execute query method
+
+/**
+ * Execute query method
+ * @param {string} sql SQL query string
+ * @param {Function} callback Function to execute after Query
+ * @param {Boolean} write 
+ */
 const executeQuery = (sql, callback, write = false) => {
 
+    //create connection
+    conn = mysql.createConnection(dbconfig);
+
+    //establishing connection
+    conn.connect();
+
+    let foo;
+
     //Execute query
-    return conn.query(sql, (err, res) => {
+    foo = conn.query(sql, (err, res) => {
+        data = res;
+    
         //If error exists
         if (err) {
             callback(getError(err), null);;
@@ -36,21 +58,34 @@ const executeQuery = (sql, callback, write = false) => {
             } else {
                 callback(null, camelcase(res));
             }
+            
         }
-    })
+    
+        //destroy connection
+        conn.destroy();
+
+        return res;
+    });
+
+    console.log(foo.sql);
 };
+
 
 
 //Create module
 const connection = {};
+
+
 
 /**
  * Connect to database
  * @param {object} config Config object from DB
  */
 connection.connect = (config) => {
-    conn = mysql.createConnection(config);
+    dbconfig = config;
 }
+
+
 
 /**
  * Get Data from DB Method
@@ -83,6 +118,11 @@ connection.getData = (queryData, callback) => {
 };
 
 
+/**
+ * Insert Data to DB Method
+ * @param {object} queryData Object with the params of SQL Query
+ * @param {function} callback Function to execute after result
+ */
 connection.insert = (queryData, callback) => {
 
     //set fields and values
@@ -108,6 +148,11 @@ connection.insert = (queryData, callback) => {
 }
 
 
+/**
+ * Execute Stored Procedure in DB Method
+ * @param {object} queryData Object with the params of SQL Query
+ * @param {function} callback Function to execute after result
+ */
 connection.execute = (queryData, callback) => {
     
     var values = [];
@@ -127,5 +172,6 @@ connection.execute = (queryData, callback) => {
     executeQuery(sqlQuery, callback, queryData.noData);
 }
 
-//Export Module
+
+//export Module
 module.exports = connection;

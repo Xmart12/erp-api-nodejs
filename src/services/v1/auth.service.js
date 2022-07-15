@@ -22,21 +22,21 @@ service.login = (body, callback) => {
     }, (err, data) => {
         if (err) { return callback(wrapper.error(err)); }
         
-        if (data.length == 0) {
+        if (data[0][0].length == 0) {
             return callback(wrapper.badrequest('User not found'));
         }
 
         //get user
-        var user = data[0];
+        var user = data[0][0];
 
         //create token
         var token = jwt.sign({
             id: user.id,
-            username: user.username,
+            username: user.userName,
             email: user.email,
             name: user.name
         }, process.env.SECRET, {
-            expiresIn: process.env.JWT_EXPIRES
+            expiresIn: (process.env.JWT_EXPIRES + 'h')
         });
 
         return callback(wrapper.ok({ token: token }));

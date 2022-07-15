@@ -22,7 +22,7 @@ service.find = (params, callback) => {
         fields: model.fields,
         where: [
             'Active = 1',
-            `Id = ${params.id}`
+            `UserName = '${params.username}'`
         ]
     }, (err, data) => callback(wrapper.auto(err, data, true, true)));
 };
