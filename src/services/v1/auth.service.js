@@ -5,44 +5,53 @@ const repository = require('../../repositories/erp.repository');
 const model = require('../../models/auth.model');
 require('dotenv').config();
 
+
 //create module
 const service = {};
 
-service.login = (body, callback) => {
 
+//verify user login
+service.login = async (body) => {
+
+    //validate model in body
     var val = model.loginVal(body);
 
+    //verify validation
     if (!val.validation) {
-        return callback(wrapper.badrequest(val.message));
+        return wrapper.badrequest(val.message);
     }
 
-    repository.execute({
+    //verify login user
+    var result = await repository.execute({
         procedure: model.loginProcedure,
         params: model.loginParams(body)
-    }, (err, data) => {
-        if (err) { return callback(wrapper.error(err)); }
-        
-        if (data[0][0].length == 0) {
-            return callback(wrapper.badrequest('User not found'));
-        }
-
-        //get user
-        var user = data[0][0];
-
-        //create token
-        var token = jwt.sign({
-            id: user.id,
-            username: user.userName,
-            email: user.email,
-            name: user.name
-        }, process.env.SECRET, {
-            expiresIn: (process.env.JWT_EXPIRES + 'h')
-        });
-
-        return callback(wrapper.ok({ token: token }));
     });
 
+    //verify if validation gets error
+    if (result.error) { return wrapper.error(result.error); }
+        
+    //verify if validation returns data result
+    if (result.data[0][0].length == 0) {
+        return wrapper.badrequest('User not found');
+    }
+
+    //get user data
+    var user = result.data[0][0];
+
+    //create token
+    var token = jwt.sign({
+        id: user.id,
+        username: user.userName,
+        email: user.email,
+        name: user.name
+    }, process.env.SECRET, {
+        expiresIn: (process.env.JWT_EXPIRES + 'h')
+    });
+
+    //return wrapper response
+    return wrapper.ok({ token: token });
 };
+
 
 //export module
 module.exports = service;

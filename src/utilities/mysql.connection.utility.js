@@ -3,10 +3,7 @@ const mysql = require('mysql');
 const camelcase = require('camelcase-keys');
 
 //Connection variables
-let conn = null;
 let dbconfig = null;
-let data = null;
-
 
 
 /**
@@ -20,7 +17,7 @@ const getError = (error) => {
     if (error.code == 'ECONNREFUSED' || error.code == 'ER_ACCESS_DENIED_ERROR') {
         errorMsg = "Cannot establish database connection";
     } else {
-        errorMsg = error.code + ' Fail getting database data'
+        errorMsg = 'Fail getting database data - ' + error.code;
     }
 
     return errorMsg;
@@ -28,46 +25,52 @@ const getError = (error) => {
 
 
 /**
+ * Get result from query by promise
+ * @param {Object} promise Query result promise
+ * @returns Object with data and error
+ */
+const getResult = async (promise) => {
+    try {
+        return await promise;
+    }
+    catch (ex) {
+        return {
+            error: ex.message,
+            data: null
+        };
+    }
+};
+
+
+/**
  * Execute query method
  * @param {string} sql SQL query string
- * @param {Function} callback Function to execute after Query
- * @param {Boolean} write 
+ * @param {Boolean} write Read or Write flag
+ * @returns Promise executed
  */
-const executeQuery = (sql, callback, write = false) => {
+const executeQuery = (sql, write = false) => {
 
-    //create connection
-    conn = mysql.createConnection(dbconfig);
+    return new Promise((resolve, reject) => {
+        
+        //create connection
+        var conn = mysql.createConnection(dbconfig);
 
-    //establishing connection
-    conn.connect();
+        //establishing connection
+        conn.connect();
 
-    let foo;
+        //Execute query
+        conn.query(sql, (err, res) => {
 
-    //Execute query
-    foo = conn.query(sql, (err, res) => {
-        data = res;
-    
-        //If error exists
-        if (err) {
-            callback(getError(err), null);;
-        }
-        else {
-            //Send result
-            if (write) {
-                callback(null, (res.affectedRows > 0));
-            } else {
-                callback(null, camelcase(res));
-            }
-            
-        }
-    
-        //destroy connection
-        conn.destroy();
+            //destroy connection
+            conn.destroy();
 
-        return res;
+            //return promise resolve 
+            return resolve({
+                error: (err) ? getError(err) : null,
+                data: (err) ? null : (write) ? (res.affectedRows > 0) : camelcase(res)
+            });
+        });
     });
-
-    console.log(foo.sql);
 };
 
 
@@ -90,9 +93,9 @@ connection.connect = (config) => {
 /**
  * Get Data from DB Method
  * @param {object} queryData Object with the params of SQL Query
- * @param {function} callback Function to execute after result
+ * @returns Object with data result
  */
-connection.getData = (queryData, callback) => {
+connection.getData = (queryData) => {
 
     //set SQL query
     var sqlQuery = 'select '; 
@@ -114,16 +117,16 @@ connection.getData = (queryData, callback) => {
     sqlQuery += (queryData.limit) ? ` limit ${queryData.limit} ` : '';
 
     //execute query
-    executeQuery(sqlQuery, callback, false);;
+    return getResult(executeQuery(sqlQuery, false));
 };
 
 
 /**
  * Insert Data to DB Method
  * @param {object} queryData Object with the params of SQL Query
- * @param {function} callback Function to execute after result
+* @returns Object with data result
  */
-connection.insert = (queryData, callback) => {
+connection.insert = (queryData) => {
 
     //set fields and values
     var fields = camelcase(Object.keys(queryData.data));
@@ -144,16 +147,16 @@ connection.insert = (queryData, callback) => {
     sqlQuery += ` values ( ${values.join(', ')} ) `;
 
     //execute query
-    executeQuery(sqlQuery, callback, true);
+    return getResult(executeQuery(sqlQuery, true));
 }
 
 
 /**
  * Execute Stored Procedure in DB Method
  * @param {object} queryData Object with the params of SQL Query
- * @param {function} callback Function to execute after result
+ * @returns Object with data result
  */
-connection.execute = (queryData, callback) => {
+connection.execute = (queryData) => {
     
     var values = [];
     queryData.params.forEach(p => {
@@ -169,7 +172,7 @@ connection.execute = (queryData, callback) => {
     sqlQuery += ` ( ${values.join(', ')} ) `;
 
     //execute query
-    executeQuery(sqlQuery, callback, queryData.noData);
+    return getResult(executeQuery(sqlQuery, queryData.noData));
 }
 
 

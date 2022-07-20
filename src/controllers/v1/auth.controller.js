@@ -6,7 +6,7 @@ const response = require('../../utilities/response.utility');
 const controller = {};
 
 //login
-controller.login = (req, res) => service.login(req.body, (wrapper) => response(res, wrapper));
+controller.login = async (req, res) => response(res, await service.login(req.body));
 
 //export module
 module.exports = controller;

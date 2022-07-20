@@ -3,52 +3,69 @@ const wrapper = require('../../utilities/wrapper.response.utility');
 const repository = require('../../repositories/erp.repository');
 const model = require('../../models/user.model');
 
+
 //create module
 const service = {};
 
+
 //get user
-service.list = (params, callback) => {
-    repository.getData({
+service.list = async (params = null) => {
+
+    //get user list
+    var result = await repository.getData({
         table: model.table,
         fields: model.fields,
         where: [ 'Active = 1' ]
-    }, (err, data) => callback(wrapper.auto(err, data, false, false)));
+    });
+    
+    //return wrapper response
+    return wrapper.auto(result.error, result.data, false, false);
 };
 
+
 //find user by id
-service.find = (params, callback) => {
-    repository.getData({
+service.find = async (params) => {
+
+    //get user by id
+    var result = await repository.getData({
         table: model.table,
         fields: model.fields,
         where: [
             'Active = 1',
             `UserName = '${params.username}'`
         ]
-    }, (err, data) => callback(wrapper.auto(err, data, true, true)));
+    });
+    
+    //return wrapper response
+    return wrapper.auto(result.error, result.data, true, true);
 };
 
+
 //create user
-service.create = (body, callback) => {
+service.create = async (body) => {
     
     //validate user
     var validation = model.validation(body);
     
+    //verify validation
     if (!validation.validation) {
-        return callback(wrapper.badrequest(validation.message));
+        return wrapper.badrequest(validation.message);
     }
 
     //Create user
-    repository.execute({
+    var result = await repository.execute({
         procedure: model.insert,
         params: model.params(body, 'yo')
-    }, (err, result) => {
-        if (result) {
-            callback(wrapper.created());
-        } else {
-            callback(wrapper.error('No se pudo crear usuario. ' + err));
-        }
     });
+    
+    //verify creation result
+    if (result.data) {
+        return wrapper.created();
+    } else {
+        return wrapper.error('Cannot create user. ' + result.error);
+    }
 };
+
 
 //export module
 module.exports = service;

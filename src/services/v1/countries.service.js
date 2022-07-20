@@ -8,23 +8,34 @@ const model = require('../../models/contry.model');
 const service = {};
 
 
-service.list = (params, callback) => {
-    repository.getData({
+//get list of countries
+service.list = async (params = null) => {
+    //get countries
+    var result = await repository.getData({
         table: model.table,
         fields: model.fields
-    }, (err, data) => callback(wrapper.auto(err, data, false, false)));
+    });
+
+    //return wrapper response
+    return wrapper.auto(result.error, result.data, false, false);
 };
 
 
-service.find = (params, callback) => {
-    repository.getData({
+//get country by id
+service.find = async (params) => {
+    //get country
+    var result = await repository.getData({
         table: model.table,
         fields: model.fields,
         where: [
             `Id = ${params.id}`
         ]
-    }, (err, data) => callback(wrapper.auto(err, data, true, true)));
+    });
+
+    //return wrapper response
+    return wrapper.auto(result.error, result.data, true, true);
 };
+
 
 //export module
 module.exports = service;

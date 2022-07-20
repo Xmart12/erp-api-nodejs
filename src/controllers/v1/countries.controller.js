@@ -6,10 +6,10 @@ const response = require('../../utilities/response.utility');
 const controller = {}
 
 //get all countries
-controller.list = (req, res) => service.list(null, (wrapper) => response(res, wrapper));
+controller.list = async (req, res) => response(res, await service.list());
 
 //get country by id
-controller.find = (req, res) => service.find(req.params, (wrapper) => response(res, wrapper));
+controller.find = async (req, res) => response(res, await service.find(req.params));
 
 //export module
 module.exports = controller;

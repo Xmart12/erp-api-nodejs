@@ -6,13 +6,13 @@ const response = require('../../utilities/response.utility');
 const controller = {};
 
 //get all users
-controller.list = (req, res) => service.list(req.params, (wrapper) => response(res, wrapper));
+controller.list = async (req, res) => response(res, await service.list());
 
 //get user by id
-controller.find = (req, res) => service.find(req.params, (wrapper) => response(res, wrapper));
+controller.find = async (req, res) => response(res, await service.find(req.params));
 
 //create user
-controller.create = (req, res) => service.create(req.body, (wrapper) => response(res, wrapper));
+controller.create = async (req, res) => response(res, await service.create(req.body));
 
 //export module
 module.exports = controller;

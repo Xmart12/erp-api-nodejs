@@ -74,7 +74,7 @@ wrapper.forbidden = () => wrapper.send(403, { message: 'Unallowed access' });
  * @returns Object status code and data
  */
 wrapper.notfound = (message = null) => wrapper.send(404, {
-    message: (message) ? message : null
+    message: (message) ? message : 'Not found'
 });
 
 /**
