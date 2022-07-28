@@ -35,7 +35,7 @@ const verifyToken = (req) => {
 const middleware = {};
 
 //validate authorization in routes
-middleware.auth = (req, res, next) => {
+middleware.auth = async (req, res, next) => {
     
     //get token
     var token = verifyToken(req);
@@ -49,34 +49,62 @@ middleware.auth = (req, res, next) => {
 
         //decoded token
         var decoded = jwt.verify(token, process.env.SECRET);
-        console.log(decoded.username);
 
         //send username to request parameters
         req.username = decoded.username;
 
         //find user by username service
-        user.find({ username: req.username }, (wpr) => {
+        var result = await user.find({ username: req.username });
 
-            console.log(wpr);
+        //if services gets error
+        if (result.statusCode > 500) {
+            return response(res, wrapper.error(result.data.message));
+        }
 
-            //if services gets error
-            if (wpr.statusCode > 500) {
-                return response(res, wrapper.error(wrp.data.message));
-            }
+        //if user not found
+        if (result.statusCode != 200 || result.data.length == 0) {
+            return response(res, wrapper.unauthorized());
+        }
 
-            //if user not found
-            if (wpr.statusCode != 200 || wpr.data.length == 0) {
-                return response(res, wrapper.unauthorized());
-            }
-
-            //return next method
-            next();
-        });
+        //return next method
+        next();
 
     } catch (ex) {
         return response(res, wrapper.unauthorized(ex.message));
     }
 };
+
+
+//validate if user is admin
+middleware.isAdmin = async (req, res, next) => {
+
+    var result = await user.roles({ username: req.username });
+
+    //if services gets error
+    if (result.statusCode > 500) {
+        return response(res, wrapper.error(result.data.message));
+    }
+
+    //if user not found
+    if (result.statusCode != 200 || result.data.length == 0) {
+        return response(res, wrapper.unauthorized());
+    }
+
+    //get roles data
+    var roles = result.data;
+    
+    //search for admin role
+    var admin = roles.find(f => f.name === 'Admin');
+
+    //verify if user has admin role
+    if (!admin) {
+        return response(res, wrapper.forbidden());
+    }
+
+    next();
+    return;
+}
+
 
 //export module
 module.exports = middleware;

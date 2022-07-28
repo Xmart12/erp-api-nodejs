@@ -20,6 +20,8 @@ const getError = (error) => {
         errorMsg = 'Fail getting database data - ' + error.code;
     }
 
+    console.log(error);
+
     return errorMsg;
 };
 

@@ -11,6 +11,9 @@ controller.list = async (req, res) => response(res, await service.list());
 //get user by id
 controller.find = async (req, res) => response(res, await service.find(req.params));
 
+//get user roles
+controller.roles = async (req, res) => response(res, await service.roles(req.params));
+
 //create user
 controller.create = async (req, res) => response(res, await service.create(req.body));
 
